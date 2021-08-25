@@ -109,11 +109,18 @@ def rename_torrent_file(hashval, oldname, newname):
 
 def strip_unwanted_names(hashval, unwanted):
     try:
+        # rename torrent file names
         for fileobj in qbt_client.torrents_files(torrent_hash=hashval):
             newname = fileobj.name.replace(unwanted, '')
             qbt_client.torrents_rename_file(torrent_hash=hashval,
                                             old_path=fileobj.name,
                                             new_path=newname)
+        # rename torrent name
+        for torrent in qbt_client.torrents_info():
+            if torrent.hash == hashval:
+                newname = torrent.name.replace(unwanted, '')
+                qbt_client.torrents_rename(torrent_hash=hashval,
+                                           new_torrent_name=newname)
         return 'Ok.'
     except:
         return 'INVALID HASH'
