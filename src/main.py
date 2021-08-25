@@ -190,7 +190,7 @@ async def on_message(message):
 
     # strip common unwanted bytes from file names
     # min length of unwanted bytes is MIN_UNWANTED_BYTES_LEN
-    elif msglist[0] == '$strip' and len(msglist) == 3 and
+    elif msglist[0] == '$strip' and len(msglist) == 3 and \
          len(msglist[2]) >= MIN_UNWANTED_BYTES_LEN:
         response = strip_unwanted_names(msglist[1], msglist[2])
 
