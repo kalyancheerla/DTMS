@@ -40,6 +40,7 @@ def get_torrent_info(shorthash):
             data += f'Hash: {torrent.hash}\n'
             data += f'Category: {torrent.category}\n'
             data += f'State: {torrent.state}\n'
+            data += f'Progress: {torrent.progress:.3f}\n'
             data += f'Size: {torrent.total_size/(10**9):.2f}GB\n'
             timestamp = datetime.fromtimestamp(torrent.added_on) \
                         .strftime('%Y-%m-%d, %I:%M:%S %p ') + tzinfo
