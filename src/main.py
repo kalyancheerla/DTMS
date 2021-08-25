@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import discord
-import json
 import qbittorrentapi
-from datetime import datetime
-#import pprint
+import json
 import shlex
+from datetime import datetime
 
 OTHER_CATEGORY = 'other'
+MIN_UNWANTED_BYTES_LEN = 3
 
 def init(configfile):
     with open(configfile, 'r') as f:
@@ -99,7 +99,6 @@ def get_torrent_file_info(hashval):
     return data
 
 def rename_torrent_file(hashval, oldname, newname):
-    #pp.pprint(val)
     try:
         qbt_client.torrents_rename_file(torrent_hash=hashval,
                                         old_path=oldname,
@@ -130,79 +129,74 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    msg = message.content
+    # split the message.content
+    try:
+        msglist = shlex.split(message.content)
+    except ValueError:
+        msglist = message.content.split()
 
-    if msg.startswith('$hello'):
-        await message.channel.send("Hey!\nI'm a BOT & I'm very "
-                                   "happy to serve you.")
+    # assign response
+    response = ''
 
-    if msg.startswith('$list'):
+    # simple hello message
+    if msglist[0] == '$hello' and len(msglist) == 1:
+        response = "Hey!\nI'm a BOT & I'm very happy to serve you."
+
+    # list all torrents
+    elif msglist[0] == '$list' and len(msglist) == 1:
         response = get_torrents_list()
-        await message.channel.send(response)
 
-    if msg.startswith('$info '):
-        response = get_torrent_info(msg.split()[1])
-        await message.channel.send(response)
+    # info of a torrent
+    elif msglist[0] == '$info' and len(msglist) == 2:
+        response = get_torrent_info(msglist[1])
 
-    # ['URL'] or ['URL1', 'URL2', ...]
-    if msg.startswith('$add '):
-        response = add_torrent_link(msg.split()[1:])
-        await message.channel.send(response)
+    # add torrent/torrents (magnet links only) (default category: other)
+    # ['URL'] or ['URL2', 'URL2', ...]
+    elif msglist[0] == '$add' and len(msglist) >= 2:
+        response = add_torrent_link(msglist[1:])
 
+    # delete torrent/torrents (using hashes)
+    # ['all'] or ['hash'] or ['hash1', 'hash2', ...]
+    elif msglist[0] == '$del' and len(msglist) >= 2:
+        response = delete_torrent(msglist[1:])
+
+    # pause torrent/torrents (using hashes)
     # ['all'] or ['hash'] or ['hashe1', 'hash2', ...]
-    if msg.startswith('$del '):
-        response = delete_torrent(msg.split()[1:])
-        await message.channel.send(response)
+    elif msglist[0] == '$pause' and len(msglist) >= 2:
+        response = pause_torrent(msglist[1:])
 
-#    if msg.startswith('$pauseall'):
-#        response = pause_torrent('all')
-#        await message.channel.send(response)
-#
-#    if msg.startswith('$resumeall'):
-#        response = resume_torrent('all')
-#        await message.channel.send(response)
-
+    # resume torrent/torrents (using hashes)
     # ['all'] or ['hash'] or ['hashe1', 'hash2', ...]
-    if msg.startswith('$pause '):
-        response = pause_torrent(msg.split()[1:])
-        await message.channel.send(response)
+    elif msglist[0] == '$resume' and len(msglist) >= 2:
+        response = resume_torrent(msglist[1:])
 
-    # ['all'] or ['hash'] or ['hashe1', 'hash2', ...]
-    if msg.startswith('$resume '):
-        response = resume_torrent(msg.split()[1:])
-        await message.channel.send(response)
-
-    # ['$rename', 'hash', 'newname part1', 'part2', ...]
-    if msg.startswith('$rename '):
-        msgsplit = msg.split()
-        if len(msgsplit) >= 3:
-            response = rename_torrent(msgsplit[1], ' '.join(msgsplit[2:]))
-            await message.channel.send(response)
+    # info on files of a torrent
+    elif msglist[0] == '$fileinfo' and len(msglist) == 2:
+        response = get_torrent_file_info(msglist[1])
 
     # ['$changecategory', 'category', 'hash1', 'hash2', ...]
-    if msg.startswith('$changecategory '):
-        msgsplit = msg.split()
-        if len(msgsplit) >= 3:
-            response = change_category(msgsplit[1], msgsplit[2:])
-            await message.channel.send(response)
+    elif msglist[0] == '$changecategory' and len(msglist) >= 3:
+        response = change_category(msglist[1], msglist[2:])
 
-    if msg.startswith('$fileinfo '):
-        response = get_torrent_file_info(msg.split()[1])
-        for i in range(0, len(response), 2000):
-            shortrsp = response[i:i+2000]
-            await message.channel.send(shortrsp)
+    # Send the file name in qoutes
+    # ['$rename', 'hash', 'newname part1', 'part2', ...]
+    elif msglist[0] == '$rename' and len(msglist) >= 3:
+        response = rename_torrent(msglist[1], ' '.join(msglist[2:]))
 
-    if msg.startswith('$renamefile '):
-        msgsplit = shlex.split(msg)
-        if len(msgsplit) == 4:
-            response = rename_torrent_file(msgsplit[1], msgsplit[2],
-                                           msgsplit[3])
-            await message.channel.send(response)
+    # Send the file names in qoutes
+    # ['$renamefile', 'hash', 'oldname', 'newname']
+    elif msglist[0] == '$renamefile' and len(msglist) == 4:
+        response = rename_torrent_file(msglist[1], msglist[2], msglist[3])
 
-    if msg.startswith('$strip '):
-        msgsplit = shlex.split(msg)
-        if len(msgsplit) == 3:
-            response = strip_unwanted_names(msgsplit[1], msgsplit[2])
-            await message.channel.send(response)
+    # strip common unwanted bytes from file names
+    # min length of unwanted bytes is MIN_UNWANTED_BYTES_LEN
+    elif msglist[0] == '$strip' and len(msglist) == 3 and
+         len(msglist[2]) >= MIN_UNWANTED_BYTES_LEN:
+        response = strip_unwanted_names(msglist[1], msglist[2])
+
+    # Send the response
+    for i in range(0, len(response), 2000):
+        shortrsp = response[i:i+2000]
+        await message.channel.send(shortrsp)
 
 bot.run(configs['TOKEN'])
