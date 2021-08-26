@@ -204,8 +204,8 @@ async def on_message(message):
     elif len(msglist) == 2 and msglist[0] == '$fileinfo':
         response = get_torrent_file_info(msglist[1])
 
-    # ['$changecategory', 'category', 'hash1', 'hash2', ...]
-    elif len(msglist) >= 3 and msglist[0] == '$changecategory':
+    # ['$change', 'category', 'hash1', 'hash2', ...]
+    elif len(msglist) >= 3 and msglist[0] == '$change':
         response = change_category(msglist[1], msglist[2:])
 
     # Send the file name in qoutes
