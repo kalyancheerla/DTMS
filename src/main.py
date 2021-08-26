@@ -147,60 +147,64 @@ async def on_message(message):
     response = ''
 
     # simple hello message
-    if msglist[0] == '$hello' and len(msglist) == 1:
+    if len(msglist) == 1 and msglist[0] == '$hello':
         response = "Hey!\nI'm a BOT & I'm very happy to serve you."
 
     # list all torrents
-    elif msglist[0] == '$list' and len(msglist) == 1:
+    elif len(msglist) == 1 and msglist[0] == '$list':
         response = get_torrents_list()
 
     # info of a torrent
-    elif msglist[0] == '$info' and len(msglist) == 2:
+    elif len(msglist) == 2 and msglist[0] == '$info':
         response = get_torrent_info(msglist[1])
 
     # add torrent/torrents (magnet links only) (default category: other)
     # ['URL'] or ['URL2', 'URL2', ...]
-    elif msglist[0] == '$add' and len(msglist) >= 2:
+    elif len(msglist) >= 2 and msglist[0] == '$add':
         response = add_torrent_link(msglist[1:])
 
     # delete torrent/torrents (using hashes)
     # ['all'] or ['hash'] or ['hash1', 'hash2', ...]
-    elif msglist[0] == '$del' and len(msglist) >= 2:
+    elif len(msglist) >= 2 and msglist[0] == '$del':
         response = delete_torrent(msglist[1:])
 
     # pause torrent/torrents (using hashes)
     # ['all'] or ['hash'] or ['hashe1', 'hash2', ...]
-    elif msglist[0] == '$pause' and len(msglist) >= 2:
+    elif len(msglist) >= 2 and msglist[0] == '$pause':
         response = pause_torrent(msglist[1:])
 
     # resume torrent/torrents (using hashes)
     # ['all'] or ['hash'] or ['hashe1', 'hash2', ...]
-    elif msglist[0] == '$resume' and len(msglist) >= 2:
+    elif len(msglist) >= 2 and msglist[0] == '$resume':
         response = resume_torrent(msglist[1:])
 
     # info on files of a torrent
-    elif msglist[0] == '$fileinfo' and len(msglist) == 2:
+    elif len(msglist) == 2 and msglist[0] == '$fileinfo':
         response = get_torrent_file_info(msglist[1])
 
     # ['$changecategory', 'category', 'hash1', 'hash2', ...]
-    elif msglist[0] == '$changecategory' and len(msglist) >= 3:
+    elif len(msglist) >= 3 and msglist[0] == '$changecategory':
         response = change_category(msglist[1], msglist[2:])
 
     # Send the file name in qoutes
     # ['$rename', 'hash', 'newname part1', 'part2', ...]
-    elif msglist[0] == '$rename' and len(msglist) >= 3:
+    elif len(msglist) >= 3 and msglist[0] == '$rename':
         response = rename_torrent(msglist[1], ' '.join(msglist[2:]))
 
     # Send the file names in qoutes
     # ['$renamefile', 'hash', 'oldname', 'newname']
-    elif msglist[0] == '$renamefile' and len(msglist) == 4:
+    elif len(msglist) == 4 and msglist[0] == '$renamefile':
         response = rename_torrent_file(msglist[1], msglist[2], msglist[3])
 
     # strip common unwanted bytes from file names
     # min length of unwanted bytes is MIN_UNWANTED_BYTES_LEN
-    elif msglist[0] == '$strip' and len(msglist) == 3 and \
+    elif len(msglist) == 3 and msglist[0] == '$strip' and \
          len(msglist[2]) >= MIN_UNWANTED_BYTES_LEN:
         response = strip_unwanted_names(msglist[1], msglist[2])
+
+    elif len(msglist) == 1 and msglist[0] == '$addfile' and \
+         message.attachments:
+        response = add_torrent_link(message.attachments[0].url)
 
     # Send the response
     for i in range(0, len(response), 2000):
