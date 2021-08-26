@@ -126,6 +126,28 @@ def strip_unwanted_names(hashval, unwanted):
     except:
         return 'INVALID HASH'
 
+def get_help():
+    data = '''```
+$hello          - Say hello to the bot!
+$list           - Lists all torrents [<shorthash>: <shortname> (category/state)]
+$info shorthash - Details on the Torrent
+$fileinfo hash  - Details on the Torrent files
+
+$add magnetlink1 magnetlink2 ... - Add magnetlink torrents (category: other)
+$addfile attachment              - Add torrent through attachment
+$del all or hash1 hash2 ...      - Delete torrents with files
+
+$pause all or hash1 hash2 ...    - Pause the torrents
+$resume all or hash1 hash2 ...   - Resume the torrents
+
+$change category hash1 hash2 ...       - Change the category of torrents
+$rename hash 'new name'                - Change the torrent name
+$renamefile hash 'old name' 'new name' - Change the torrent file name
+
+$strip hash 'unwanted data' - Strip unwanted data from torrent name & its file names
+           ```'''
+    return data
+
 bot = discord.Client()
 
 @bot.event
@@ -202,9 +224,14 @@ async def on_message(message):
          len(msglist[2]) >= MIN_UNWANTED_BYTES_LEN:
         response = strip_unwanted_names(msglist[1], msglist[2])
 
+    # add torrent through torrent file
     elif len(msglist) == 1 and msglist[0] == '$addfile' and \
          message.attachments:
         response = add_torrent_link(message.attachments[0].url)
+
+    # help
+    elif len(msglist) == 1 and msglist[0] == '$help':
+        response = get_help()
 
     # Send the response
     for i in range(0, len(response), 2000):
