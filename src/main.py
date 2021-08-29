@@ -54,6 +54,14 @@ def get_torrent_info(shorthash):
             break
     return data
 
+def get_torrent_magnetlink(shorthash):
+    data = 'INVALID SHORT HASH!'
+    for torrent in qbt_client.torrents_info():
+        if torrent.hash[:7] == shorthash:
+            data = torrent.magnet_uri
+            break
+    return data
+
 def add_torrent_link(magnetlink):
     data = qbt_client.torrents_add(urls=magnetlink,
                                    category=OTHER_CATEGORY,
@@ -130,8 +138,10 @@ def get_help():
     data = '''```
 $hello          - Say hello to the bot!
 $list           - Lists all torrents [<shorthash>: <shortname> (category/state)]
-$info shorthash - Details on the Torrent
-$fileinfo hash  - Details on the Torrent files
+
+$info shorthash                  - Details on the Torrent
+$fileinfo hash                   - Details on the Torrent files
+$getmagnetlink shorthash         - Magnetlink of the Torrent
 
 $add magnetlink1 magnetlink2 ... - Add magnetlink torrents (category: other)
 $addfile attachment              - Add torrent through attachment
@@ -179,6 +189,10 @@ async def on_message(message):
     # info of a torrent
     elif len(msglist) == 2 and msglist[0] == '$info':
         response = get_torrent_info(msglist[1])
+
+    # get magnet link of the torrent
+    elif len(msglist) == 2 and msglist[0] == '$getmagnetlink':
+        response = get_torrent_magnetlink(msglist[1])
 
     # add torrent/torrents (magnet links only) (default category: other)
     # ['URL'] or ['URL2', 'URL2', ...]
